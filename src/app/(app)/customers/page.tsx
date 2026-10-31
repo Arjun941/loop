@@ -1,12 +1,12 @@
 import { ListLayout, readListParams } from "@/components/list/list-page";
 import { Pagination } from "@/components/list/pagination";
-import { Button } from "@/components/ui/button";
 import { EmptyState, Page, PageHeader } from "@/components/ui/page";
 import { Table, Td, Th, Tr } from "@/components/ui/table";
 import { listCustomers, PAGE_SIZE } from "@/server/queries/lists";
 import { money } from "@/lib/format";
-import { Plus, Users } from "lucide-react";
+import { Users } from "lucide-react";
 import type { Metadata } from "next";
+import { NewCustomerButton } from "./new-customer-button";
 
 export const metadata: Metadata = { title: "Customers" };
 
@@ -16,11 +16,7 @@ export default function CustomersPage({ searchParams }: PageProps<"/customers">)
       <PageHeader
         title="Customers"
         subtitle="Who pays you, and how they're doing."
-        actions={
-          <Button>
-            <Plus className="size-4" strokeWidth={2.2} /> New customer
-          </Button>
-        }
+        actions={<NewCustomerButton />}
       />
       <ListLayout placeholder="Search name or email">
         <Results searchParams={searchParams} />

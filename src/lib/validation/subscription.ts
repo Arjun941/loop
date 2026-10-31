@@ -46,7 +46,19 @@ export const subscriptionSchema = z
 
 export type SubscriptionInput = z.infer<typeof subscriptionSchema>;
 
+/** Blank optional text becomes null, so empty fields aren't stored as "". */
+const optionalText = (max: number) =>
+  z
+    .string()
+    .trim()
+    .max(max)
+    .optional()
+    .transform((v) => v || null);
+
 export const customerSchema = z.object({
   name: z.string().trim().min(2, "Enter a name").max(120),
   email: z.string().trim().toLowerCase().pipe(z.email({ error: "Enter a valid email" })),
+  company: optionalText(120),
+  phone: optionalText(40),
+  address: optionalText(300),
 });

@@ -60,13 +60,13 @@ export async function findCustomers(q: string) {
   return searchCustomers(q);
 }
 
-export async function createCustomer(input: { name: string; email: string }): Promise<FormState & { customer?: { id: string; name: string; email: string } }> {
+export async function createCustomer(input: { name: string; email: string; company?: string; phone?: string; address?: string }): Promise<FormState & { customer?: { id: string; name: string; email: string } }> {
   await requireStaff();
   const parsed = customerSchema.safeParse(input);
   if (!parsed.success) return { fieldErrors: fieldErrors(parsed.error) };
   const [existing] = await db.select({ id: customers.id }).from(customers).where(sql`lower(${customers.email}) = ${parsed.data.email}`).limit(1);
   if (existing) return { fieldErrors: { email: "A customer with this email already exists" } };
-  const [customer] = await db.insert(customers).values({ ...parsed.data, company: parsed.data.name }).returning({ id: customers.id, name: customers.name, email: customers.email });
+  const [customer] = await db.insert(customers).values({ ...parsed.data, company: parsed.data.company ?? parsed.data.name }).returning({ id: customers.id, name: customers.name, email: customers.email });
   revalidatePath("/customers");
   return { ok: true, customer };
 }
