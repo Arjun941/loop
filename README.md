@@ -2,6 +2,8 @@
 
 Subscription billing that runs itself: products and plans, quotes, subscriptions, invoices, payments and revenue reporting in one place. Next.js 16 (App Router, Cache Components) · Supabase (Postgres + Auth) · Drizzle · Resend.
 
+**Live:** https://loop-two-kappa.vercel.app · **Walkthrough video:** [loop-guide.mp4](https://github.com/Arjun941/loop/releases/tag/guide-video)
+
 ## Run it
 
 1. Create a Supabase project, then copy `.env.example` to `.env.local` and fill in the Supabase URL,
