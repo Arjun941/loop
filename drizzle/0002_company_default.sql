@@ -1,0 +1,1 @@
+ALTER TABLE "company_settings" ALTER COLUMN "name" SET DEFAULT 'My company';
