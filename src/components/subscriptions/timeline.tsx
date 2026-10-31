@@ -2,13 +2,11 @@
  * The history of a subscription: who changed what, when, and what it did to monthly revenue.
  */
 import { STATUS_LABEL, type SubscriptionStatus } from "@/lib/domain/subscription-status";
-import { money } from "@/lib/format";
+import { formatDateTime, money } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { CircleDot, FileText, Pause, Play, Power, RefreshCw, Send, ThumbsUp } from "lucide-react";
 
 type Event = { id: string; fromStatus: SubscriptionStatus | null; toStatus: SubscriptionStatus; mrrDelta: number; note: string | null; at: Date; actor: string | null };
-
-const time = new Intl.DateTimeFormat("en-IN", { day: "numeric", month: "short", year: "numeric", hour: "numeric", minute: "2-digit" });
 
 function describe(e: Event) {
   if (e.note && e.fromStatus === e.toStatus) return { icon: RefreshCw, text: e.note, tone: "accent" };
@@ -58,7 +56,7 @@ export function Timeline({ events }: { events: Event[] }) {
                 )}
               </div>
               <div className="text-[12.5px] text-muted">
-                {time.format(e.at)}
+                {formatDateTime(e.at)}
                 {e.actor && ` · ${e.actor}`}
                 {e.note && e.fromStatus !== e.toStatus && e.note !== "Created" && ` · ${e.note}`}
               </div>

@@ -32,6 +32,18 @@ export function formatDate(value: string | Date | null | undefined, opts: { shor
   return (opts.short ? shortFmt : dateFmt).format(d);
 }
 
+/**
+ * Timestamps in the business's time zone, so the server (UTC on Vercel) and every browser
+ * print the same time. Without a fixed zone, client components fail to hydrate.
+ */
+const TIME_ZONE = "Asia/Kolkata";
+const dateTimeFmt = new Intl.DateTimeFormat("en-IN", { day: "numeric", month: "short", year: "numeric", hour: "numeric", minute: "2-digit", timeZone: TIME_ZONE });
+const shortDateTimeFmt = new Intl.DateTimeFormat("en-IN", { day: "numeric", month: "short", hour: "numeric", minute: "2-digit", timeZone: TIME_ZONE });
+
+export function formatDateTime(value: string | Date, opts: { short?: boolean } = {}) {
+  return (opts.short ? shortDateTimeFmt : dateTimeFmt).format(new Date(value));
+}
+
 export function number(n: number) {
   return new Intl.NumberFormat(LOCALE).format(n);
 }

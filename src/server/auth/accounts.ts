@@ -74,12 +74,28 @@ export function authLinkUrl(hashedToken: string, type: "signup" | "recovery" | "
 }
 
 /**
+ * `next` as a path on this site, or null. Browsers read `/\evil.com` or `/\t/evil.com` as another
+ * site, so rather than pattern-match we resolve it the way a browser would and keep it only if it
+ * stays on our origin.
+ */
+function safePath(next: unknown) {
+  if (typeof next !== "string" || !next.startsWith("/")) return null;
+  const base = "https://loop.invalid";
+  try {
+    const url = new URL(next, base);
+    return url.origin === base ? url.pathname + url.search + url.hash : null;
+  } catch {
+    return null;
+  }
+}
+
+/**
  * Where to send a user after signing in: their requested page if it's safe and theirs, else their home.
  * `/reset` is allowed for everyone, since recovery and invite links finish there.
  */
 export function landingFor(role: Role, next: unknown) {
-  const value = typeof next === "string" ? next : "";
-  if (!value.startsWith("/") || value.startsWith("//")) return homeFor(role);
+  const value = safePath(next);
+  if (!value) return homeFor(role);
   if (value === "/reset" || value.startsWith("/reset?")) return value;
   const isPortal = value === "/portal" || value.startsWith("/portal/");
   if ((role === "customer") !== isPortal) return homeFor(role);

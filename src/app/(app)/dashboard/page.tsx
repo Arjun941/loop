@@ -72,7 +72,7 @@ async function Overview({ searchParams }: { searchParams: PageProps<"/dashboard"
           </Card>
         )}
 
-        <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,1fr)_360px]">
+        <div className="grid grid-cols-1 items-start gap-5 lg:grid-cols-[minmax(0,1fr)_360px]">
           <Panel title="Revenue movement" subtitle={`How monthly recurring revenue changed, ${rangeLabel}`}>
             <Waterfall
               steps={[
@@ -118,7 +118,7 @@ async function Overview({ searchParams }: { searchParams: PageProps<"/dashboard"
           </Panel>
         </div>
 
-        <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,1fr)_360px]">
+        <div className="grid grid-cols-1 items-start gap-5 lg:grid-cols-[minmax(0,1fr)_360px]">
           <Panel title="Billed vs collected" subtitle="Last 12 months">
             <BilledCollected data={d.monthly} />
           </Panel>
@@ -176,7 +176,7 @@ function DashboardSkeleton() {
           </Card>
         ))}
       </div>
-      <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_360px]">
+      <div className="grid grid-cols-1 gap-5 lg:grid-cols-[minmax(0,1fr)_360px]">
         <Card className="h-80" />
         <Card className="h-80" />
       </div>

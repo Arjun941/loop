@@ -4,6 +4,9 @@
  * Renders a React Email template, delivers it through Resend when `RESEND_API_KEY` is set,
  * and always records it in `email_log`, which powers the in-app Outbox and customer timelines.
  * Delivery failures are logged, never thrown: a flaky provider must not break sign-up or billing.
+ *
+ * Emails that carry a sign-in link (password reset, invite, email confirmation) are logged without
+ * their body: anyone who could read the link could sign in as the recipient.
  */
 import "server-only";
 import { db } from "@/server/db";
@@ -18,6 +21,9 @@ import { Resend } from "resend";
 export type EmailStatus = "sent" | "outbox" | "failed";
 
 const resend = env.resendApiKey ? new Resend(env.resendApiKey) : null;
+
+/** Templates whose body holds a one-time sign-in link. Never stored or shown in the Outbox. */
+export const SECRET_TEMPLATES = new Set(["password-reset", "staff-invite", "confirm-email"]);
 
 export function emailProviderConfigured() {
   return resend !== null;
@@ -55,6 +61,11 @@ export async function sendEmail({
     }
   }
 
-  await db.insert(emailLog).values({ to, subject, template, html, status, providerId, customerId: customerId ?? null });
+  const secret = SECRET_TEMPLATES.has(template);
+  // Without a provider a sign-in link can't reach anyone, so in development print it to the server log instead.
+  if (secret && status !== "sent" && process.env.NODE_ENV !== "production") {
+    console.info(`[email] ${template} for ${to} was not delivered. Its text, for local testing:\n${text}`);
+  }
+  await db.insert(emailLog).values({ to, subject, template, html: secret ? null : html, status, providerId, customerId: customerId ?? null });
   return status;
 }

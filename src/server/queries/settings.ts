@@ -5,7 +5,7 @@ import "server-only";
 import { requireStaff } from "@/server/auth/access";
 import { db } from "@/server/db";
 import { companySettings, emailLog, profiles } from "@/server/db/schema";
-import { emailProviderConfigured } from "@/server/email/send";
+import { emailProviderConfigured, SECRET_TEMPLATES } from "@/server/email/send";
 import { count, desc, eq, inArray } from "drizzle-orm";
 
 export async function getCompany() {
@@ -47,8 +47,11 @@ export async function listEmails(page = 1) {
   return { rows, total };
 }
 
-export async function getEmailHtml(id: string) {
+/** One email's HTML for the Outbox preview. Emails with a sign-in link are never shown (see SECRET_TEMPLATES). */
+export async function getEmailHtml(id: string): Promise<{ html: string } | { hidden: true } | null> {
   await requireStaff();
-  const [row] = await db.select({ html: emailLog.html }).from(emailLog).where(eq(emailLog.id, id));
-  return row?.html ?? null;
+  const [row] = await db.select({ html: emailLog.html, template: emailLog.template }).from(emailLog).where(eq(emailLog.id, id));
+  if (!row) return null;
+  if (SECRET_TEMPLATES.has(row.template) || !row.html) return { hidden: true };
+  return { html: row.html };
 }
