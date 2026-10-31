@@ -10,7 +10,7 @@
 import { faker } from "@faker-js/faker";
 import { createClient } from "@supabase/supabase-js";
 import { eq, sql } from "drizzle-orm";
-import { migrate } from "drizzle-orm/postgres-js/migrator";
+import { migrate } from "drizzle-orm/node-postgres/migrator";
 import { randomUUID } from "node:crypto";
 import path from "node:path";
 import { addDays, addPeriod, monthlyFactor, today, type Period } from "../../lib/dates";
@@ -55,7 +55,7 @@ async function main() {
       }
       if (data.users.length < 1000) break;
     }
-    const tables = await db.execute<{ tablename: string }>(sql`select tablename from pg_tables where schemaname = 'public' and tablename <> '__drizzle_migrations'`);
+    const { rows: tables } = await db.execute<{ tablename: string }>(sql`select tablename from pg_tables where schemaname = 'public' and tablename <> '__drizzle_migrations'`);
     if (tables.length) await db.execute(sql.raw(`truncate ${tables.map((t) => `"${t.tablename}"`).join(", ")} restart identity cascade`));
     console.log("Reset: app data and logins removed.");
   }

@@ -2,7 +2,7 @@
  * Applies pending migrations from ./drizzle to the database in DATABASE_URL.
  *   npm run db:migrate
  */
-import { migrate } from "drizzle-orm/postgres-js/migrator";
+import { migrate } from "drizzle-orm/node-postgres/migrator";
 import path from "node:path";
 
 async function main() {

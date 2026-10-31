@@ -1,33 +1,37 @@
 /**
- * Database connection: Supabase Postgres through its **session** pooler (port 5432).
+ * Database connection: Supabase Postgres through its **transaction** pooler (port 6543), with node-postgres.
  *
- * Not the transaction pooler (port 6543): when a page runs more queries at once than there are
- * connections, the driver pipelines several queries on one connection, and the transaction pooler
- * stalls on that until the statement timeout. The session pooler handles it fine.
- * `prepare: false` keeps it compatible with either. One client per process, reused across hot reloads.
+ * Why this pairing:
+ * - The transaction pooler shares a few real database connections among many clients, so any number
+ *   of serverless instances can connect. The session pooler (5432) gives each client its own database
+ *   connection and caps them all at the plan's pool size (15 on smaller plans): a handful of Vercel
+ *   instances exhausted it and every query failed with EMAXCONNSESSION.
+ * - node-postgres runs one query per connection and queues the rest until one is free. (postgres-js
+ *   pipelines extra queries onto busy connections, which the transaction pooler stalls on.)
  *
- * The session pooler caps *total* connections (15 on Supabase's smaller plans), shared by every
- * server instance and your local dev server. So each instance keeps a small pool and hands idle
- * connections back quickly; on Vercel, several instances run at once. Override with DB_POOL_MAX.
+ * Advisory locks are transaction-scoped (`pg_advisory_xact_lock`), which the transaction pooler supports.
+ * One pool per process, reused across hot reloads. Override the pool size with DB_POOL_MAX.
  */
-import { drizzle } from "drizzle-orm/postgres-js";
-import postgres from "postgres";
+import { drizzle } from "drizzle-orm/node-postgres";
+import { Pool } from "pg";
 import * as schema from "./schema";
 
 function connect() {
   const url = process.env.DATABASE_URL;
   if (!url) throw new Error("DATABASE_URL is not set. Copy .env.example to .env.local and add your Supabase connection string.");
-  if (/pooler\.supabase\.com:6543\//.test(url)) {
-    console.warn("[db] DATABASE_URL uses the transaction pooler (6543). Use the session pooler (5432): pages that run many queries at once can stall on 6543.");
+  if (/pooler\.supabase\.com:5432\//.test(url)) {
+    console.warn("[db] DATABASE_URL uses the session pooler (5432), which caps total connections. Use the transaction pooler (6543).");
   }
   const onVercel = !!process.env.VERCEL;
-  const client = postgres(url, {
-    prepare: false,
-    max: Number(process.env.DB_POOL_MAX) || (onVercel ? 3 : 5),
-    idle_timeout: onVercel ? 5 : 20, // seconds before an idle connection is closed
-    max_lifetime: 60 * 10,
+  const pool = new Pool({
+    connectionString: url,
+    max: Number(process.env.DB_POOL_MAX) || 10,
+    idleTimeoutMillis: onVercel ? 5_000 : 20_000,
+    connectionTimeoutMillis: 10_000,
   });
-  return drizzle({ client, schema });
+  // An idle client can be dropped by the pooler; log it instead of crashing the process.
+  pool.on("error", (err) => console.error("[db] idle client error:", err.message));
+  return drizzle({ client: pool, schema });
 }
 
 type DB = ReturnType<typeof connect>;

@@ -7,7 +7,7 @@ Subscription billing that runs itself: products and plans, quotes, subscriptions
 ## Run it
 
 1. Create a Supabase project, then copy `.env.example` to `.env.local` and fill in the Supabase URL,
-   publishable key, secret key and the **Session pooler** connection string (port 5432; the transaction pooler on 6543 stalls on pages that run several queries at once).
+   publishable key, secret key and the **Transaction pooler** connection string (port 6543; the session pooler on 5432 caps total connections, which serverless instances quickly use up).
 2. In Supabase → Authentication → URL Configuration, add `http://localhost:3000/**` to Redirect URLs.
 
 ```bash
